@@ -1,9 +1,7 @@
 package io.trimixa.demos.kafka;
 
-import org.apache.kafka.clients.producer.Callback;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
-import org.apache.kafka.clients.producer.RecordMetadata;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,7 +11,7 @@ import java.util.Properties;
 public class ProducerDemoKeys {
     private static final Logger log = LoggerFactory.getLogger(ProducerDemoKeys.class.getSimpleName());
 
-    public static void main(String[] args) {
+    static void main() {
         log.info("Producer Demo");
         KafkaProducer<String, String> producer = getStringStringKafkaProducer();
         for (int j = 0; j < 2; j++) {
@@ -26,19 +24,21 @@ public class ProducerDemoKeys {
                 //create the Producer Record
                 ProducerRecord<String, String> producerRecord = new ProducerRecord<>(topic, key, value);
                 //send data
-                producer.send(producerRecord, new Callback() {
-                    @Override
-                    public void onCompletion(RecordMetadata metadata, Exception exception) {
-                        //execute everytime the record is sent or exception occurred
-                        if (exception == null) {
-                            //the record was successfully sent
-                            log.info("Key:{} | Partition: {}", key, metadata.partition());
-                        } else {
-                            log.error("Error sending record", exception);
-                        }
+                producer.send(producerRecord, (metadata, exception) -> {
+                    //execute everytime the record is sent or exception occurred
+                    if (exception == null) {
+                        //the record was successfully sent
+                        log.info("Key:{} | Partition: {}", key, metadata.partition());
+                    } else {
+                        log.error("Error sending record", exception);
                     }
                 });
 
+            }
+            try {
+                Thread.sleep(500);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
             }
         }
 
